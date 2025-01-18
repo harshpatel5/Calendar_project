@@ -1,0 +1,105 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: Arial, sans-serif;
+  background-color: #f4f4f4;
+}
+
+
+#month-name { 
+  background-color: #ffffff;
+  text-align: center;
+  font-weight: bold;
+  padding: 10px;
+  font-size: 24px;
+  border-radius: 6px;
+  color: #333;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); 
+}
+
+
+header {
+  display: flex;
+  justify-content: space-between;
+  padding: 15px;
+  text-align: center;
+  align-items: center;
+  background-color: #4d8fd6; 
+  color: white;
+  border-top-left-radius: 6px;
+  border-top-right-radius: 6px;
+}
+
+
+header button {
+  padding: 10px 14px;
+  background-color: #0056b3; 
+  color: #ffffff;
+  border-radius: 6px;
+  border: none; 
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+
+header button:hover {
+  background-color: #003f7f; 
+}
+
+#calendar {
+  width: 60%;
+  margin: 0 auto;
+  background-color: #ffffff;
+  
+  border-radius: 6px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  padding-bottom: 20px;
+}
+
+
+#calendar-grid {
+  width: 100%;
+
+  table-layout: fixed;
+  border-collapse: collapse;
+}
+
+th, td {
+  text-align: center;
+  padding: 15px;
+
+  border: 1px solid #ddd;
+}
+
+
+th {
+  background-color: #4d8fd6; 
+  color: white;
+
+  font-size: 18px;
+}
+
+
+td {
+  
+  background-color: #f4f4f4;
+  font-size: 16px;
+
+  transition: background-color 0.3s ease;
+}
+
+td:hover {
+  background-color: #dbe3e3;
+}
+
+td.empty {
+  background-color: #f4f4f4;
+  cursor: default;
+}
+
+
+.booked {
+  background-color: #ffcccb; 
+}
