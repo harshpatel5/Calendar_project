@@ -8,31 +8,88 @@
     <script src="script.js" defer></script>
 </head>
 <body>
-    <div id="calendar">
-        <header>
-            <button id="prev-month">Previous</button>
-            <h1 id="month-name">November 2024</h1>
-            <button id="next-month">Next</button>
-        </header>
-        <table id="calendar-grid">
-            <thead>
-                <tr>
-                    <th>Sun</th>
-                    <th>Mon</th>
-                    <th>Tue</th>
-                    <th>Wed</th>
-                    <th>Thu</th>
-                    <th>Fri</th>
-                    <th>Sat</th>
-                </tr>
-            </thead>
-            <tbody id="tableb"> 
-                
-            </tbody>
-        </table>
+    <div class="container">
+        <div id="calendar">
+            <header>
+                <div class="calendar-controls">
+                    <button id="prev-month">Previous</button>
+                    <h1 id="month-name">November 2024</h1>
+                    <button id="next-month">Next</button>
+                </div>
+                <div class="view-controls">
+                    <button class="view-btn active" data-view="month">Month</button>
+                    <button class="view-btn" data-view="week">Week</button>
+                    <button class="view-btn" data-view="day">Day</button>
+                </div>
+            </header>
+            <div id="calendar-container">
+                <table id="calendar-grid">
+                    <thead>
+                        <tr>
+                            <th>Sun</th>
+                            <th>Mon</th>
+                            <th>Tue</th>
+                            <th>Wed</th>
+                            <th>Thu</th>
+                            <th>Fri</th>
+                            <th>Sat</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableb">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div id="event-panel">
+            <div class="event-header">
+                <h2>Events</h2>
+                <button id="add-event">+ New Event</button>
+            </div>
+            <div id="events-list"></div>
+        </div>
     </div>
 
-        
-
+    <!-- Event Form Modal -->
+    <div id="event-modal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Event Details</h2>
+            <form id="event-form">
+                <div class="form-group">
+                    <label for="event-title">Title:</label>
+                    <input type="text" id="event-title" required>
+                </div>
+                <div class="form-group">
+                    <label for="event-date">Date:</label>
+                    <input type="date" id="event-date" required>
+                </div>
+                <div class="form-group">
+                    <label for="event-time">Time:</label>
+                    <input type="time" id="event-time">
+                </div>
+                <div class="form-group">
+                    <label for="event-description">Description:</label>
+                    <textarea id="event-description"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="event-recurring">Recurring:</label>
+                    <select id="event-recurring">
+                        <option value="none">None</option>
+                        <option value="daily">Daily</option>
+                        <option value="weekly">Weekly</option>
+                        <option value="monthly">Monthly</option>
+                    </select>
+                </div>
+                <div class="form-group recurring-end-group" style="display: none;">
+                    <label for="recurring-end-date">Recurring until:</label>
+                    <input type="date" id="recurring-end-date">
+                </div>
+                <div class="form-buttons">
+                    <button type="submit">Save Event</button>
+                    <button type="button" id="delete-event" style="display: none;">Delete Event</button>
+                </div>
+            </form>
+        </div>
+    </div>
 </body>
 </html>
