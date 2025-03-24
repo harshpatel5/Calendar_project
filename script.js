@@ -65,21 +65,47 @@ function init() {
     
     // Navigation
     prevMonthButton.addEventListener('click', () => {
-        if (currentMonth === 0) {
-            currentMonth = 11;
-            currentYear--;
+        if (currentView === 'week') {
+            // Move back by 7 days for week view
+            currentDate = new Date(currentYear, currentMonth, currentDate.getDate() - 7);
+            currentMonth = currentDate.getMonth();
+            currentYear = currentDate.getFullYear();
+        } else if (currentView === 'day') {
+            // Move back by 1 day for day view
+            currentDate = new Date(currentYear, currentMonth, currentDate.getDate() - 1);
+            currentMonth = currentDate.getMonth();
+            currentYear = currentDate.getFullYear();
         } else {
-            currentMonth--;
+            // Default month view behavior
+            if (currentMonth === 0) {
+                currentMonth = 11;
+                currentYear--;
+            } else {
+                currentMonth--;
+            }
         }
         generateCalendar();
     });
 
     nextMonthButton.addEventListener('click', () => {
-        if (currentMonth === 11) {
-            currentMonth = 0;
-            currentYear++;
+        if (currentView === 'week') {
+            // Move forward by 7 days for week view
+            currentDate = new Date(currentYear, currentMonth, currentDate.getDate() + 7);
+            currentMonth = currentDate.getMonth();
+            currentYear = currentDate.getFullYear();
+        } else if (currentView === 'day') {
+            // Move forward by 1 day for day view
+            currentDate = new Date(currentYear, currentMonth, currentDate.getDate() + 1);
+            currentMonth = currentDate.getMonth();
+            currentYear = currentDate.getFullYear();
         } else {
-            currentMonth++;
+            // Default month view behavior
+            if (currentMonth === 11) {
+                currentMonth = 0;
+                currentYear++;
+            } else {
+                currentMonth++;
+            }
         }
         generateCalendar();
     });
@@ -219,6 +245,10 @@ function generateWeekView() {
     
     // Calculate the start of the week (Sunday) based on current date
     const startOfWeek = new Date(currentYear, currentMonth, currentDate.getDate());
+    
+    // Adjust the heading to show current week range
+    monthName.textContent = getWeekRangeText(startOfWeek);
+    
     // Move to the previous Sunday if not already on Sunday
     while (startOfWeek.getDay() !== 0) {
         startOfWeek.setDate(startOfWeek.getDate() - 1);
@@ -304,6 +334,10 @@ function generateDayView() {
     dayHeader.colSpan = 6;
     headerRow.appendChild(dayHeader);
     thead.appendChild(headerRow);
+    
+    // Update month name to show current date
+    const monthNameArr = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+    monthName.textContent = `${monthNameArr[currentDate.getMonth()]} ${currentDate.getDate()}, ${currentDate.getFullYear()}`;
     
     // Clear tbody
     calendarGrid.innerHTML = '';
@@ -442,12 +476,122 @@ function saveEvent() {
         recurringEndDate: recurringSelect.value !== 'none' ? recurringEndDate.value : null
     };
 
+    // Check for time conflicts
+    if (eventData.time) {
+        const conflictingEvents = events.filter(event => 
+            event.id !== eventData.id && // Not the same event (for edits)
+            event.date === eventData.date && // Same date
+            event.time === eventData.time // Same time
+        );
+        
+        if (conflictingEvents.length > 0) {
+            const conflictEvent = conflictingEvents[0];
+            alert(`Time conflict detected!\n\nThere is already an event "${conflictEvent.title}" scheduled at ${eventData.time} on ${eventData.date}.\n\nPlease choose a different time.`);
+            return; // Don't save the event
+        }
+    }
+
     if (selectedEventId) {
-        const index = events.findIndex(e => e.id === selectedEventId);
-        if (index !== -1) {
-            events[index] = eventData;
+        // Get the event being edited
+        const originalEvent = events.find(e => e.id === selectedEventId);
+        
+        // Check if it's a recurring event
+        if (originalEvent && originalEvent.recurring && originalEvent.recurring !== 'none') {
+            const updateOptions = confirm(`Do you want to update all instances of "${originalEvent.title}"?\n\nClick OK to update all instances.\nClick Cancel to update only this specific date.`);
+            
+            if (updateOptions) {
+                // Update all instances of this recurring series
+                events = events.map(event => {
+                    // If this event matches the recurring series (same title, recurring type, and end date)
+                    if (event.title === originalEvent.title && 
+                        event.recurring === originalEvent.recurring && 
+                        event.recurringEndDate === originalEvent.recurringEndDate) {
+                        
+                        // Keep the original date but update all other properties
+                        return {
+                            ...eventData,
+                            id: event.id,
+                            date: event.date
+                        };
+                    }
+                    return event;
+                });
+                
+                // If recurring pattern or end date changed, remove old instances and generate new ones
+                if (originalEvent.recurring !== eventData.recurring || 
+                    originalEvent.recurringEndDate !== eventData.recurringEndDate) {
+                    
+                    // Remove all old recurring instances
+                    events = events.filter(event => {
+                        return event.title !== originalEvent.title || 
+                               event.recurring !== originalEvent.recurring ||
+                               event.recurringEndDate !== originalEvent.recurringEndDate;
+                    });
+                    
+                    // Add the updated event
+                    events.push(eventData);
+                    
+                    // Generate new recurring events if still recurring
+                    if (eventData.recurring !== 'none') {
+                        const baseDate = new Date(eventData.date);
+                        const endDate = new Date(eventData.recurringEndDate || '');
+                        
+                        // Use provided end date or default to 1 year if invalid
+                        const validEndDate = !isNaN(endDate.getTime()) ? endDate : new Date(baseDate);
+                        if (isNaN(validEndDate.getTime())) {
+                            validEndDate.setFullYear(validEndDate.getFullYear() + 1);
+                        }
+                        
+                        const recurringEvents = generateRecurringEvents(eventData, baseDate, validEndDate);
+                        
+                        // Check for time conflicts in recurring events
+                        if (eventData.time) {
+                            const conflictEvents = [];
+                            recurringEvents.forEach(recEvent => {
+                                const conflicts = events.filter(event => 
+                                    event.id !== recEvent.id && 
+                                    event.date === recEvent.date && 
+                                    event.time === recEvent.time
+                                );
+                                if (conflicts.length > 0) {
+                                    conflictEvents.push({
+                                        date: recEvent.date,
+                                        time: recEvent.time,
+                                        conflictWith: conflicts[0].title
+                                    });
+                                }
+                            });
+                            
+                            if (conflictEvents.length > 0) {
+                                const firstConflict = conflictEvents[0];
+                                const [year, month, day] = firstConflict.date.split('-');
+                                const dateObj = new Date(year, month - 1, day);
+                                const formattedDate = dateObj.toLocaleDateString();
+                                
+                                alert(`Time conflict detected in recurring events!\n\nThere is already an event "${firstConflict.conflictWith}" scheduled at ${firstConflict.time} on ${formattedDate}.\n\n${conflictEvents.length > 1 ? `And ${conflictEvents.length - 1} more conflicts.` : ''}\n\nPlease adjust your recurring pattern or times.`);
+                                return; // Don't save
+                            }
+                        }
+                        
+                        events = events.concat(recurringEvents);
+                    }
+                }
+            } else {
+                // Update only this specific instance
+                const index = events.findIndex(e => e.id === selectedEventId);
+                if (index !== -1) {
+                    events[index] = eventData;
+                }
+            }
+        } else {
+            // Non-recurring event - just update this instance
+            const index = events.findIndex(e => e.id === selectedEventId);
+            if (index !== -1) {
+                events[index] = eventData;
+            }
         }
     } else {
+        // New event
         events.push(eventData);
         
         // Handle recurring events
@@ -462,6 +606,36 @@ function saveEvent() {
             }
             
             const recurringEvents = generateRecurringEvents(eventData, baseDate, validEndDate);
+            
+            // Check for time conflicts in recurring events
+            if (eventData.time) {
+                const conflictEvents = [];
+                recurringEvents.forEach(recEvent => {
+                    const conflicts = events.filter(event => 
+                        event.id !== recEvent.id && 
+                        event.date === recEvent.date && 
+                        event.time === recEvent.time
+                    );
+                    if (conflicts.length > 0) {
+                        conflictEvents.push({
+                            date: recEvent.date,
+                            time: recEvent.time,
+                            conflictWith: conflicts[0].title
+                        });
+                    }
+                });
+                
+                if (conflictEvents.length > 0) {
+                    const firstConflict = conflictEvents[0];
+                    const [year, month, day] = firstConflict.date.split('-');
+                    const dateObj = new Date(year, month - 1, day);
+                    const formattedDate = dateObj.toLocaleDateString();
+                    
+                    alert(`Time conflict detected in recurring events!\n\nThere is already an event "${firstConflict.conflictWith}" scheduled at ${firstConflict.time} on ${formattedDate}.\n\n${conflictEvents.length > 1 ? `And ${conflictEvents.length - 1} more conflicts.` : ''}\n\nPlease adjust your recurring pattern or times.`);
+                    return; // Don't save
+                }
+            }
+            
             events = events.concat(recurringEvents);
         }
     }
@@ -478,13 +652,21 @@ function deleteEvent(eventId) {
     
     if (eventToDelete) {
         if (eventToDelete.recurring && eventToDelete.recurring !== 'none') {
-            // For recurring events, delete all instances
-            events = events.filter(event => {
-                // Keep events that are not part of this recurring series
-                return event.title !== eventToDelete.title || 
-                       event.date < eventToDelete.date || 
-                       (event.recurringEndDate && event.recurringEndDate !== eventToDelete.recurringEndDate);
-            });
+            // For recurring events, ask whether to delete just this instance or all instances
+            const deleteOptions = confirm(`Do you want to delete all instances of "${eventToDelete.title}"?\n\nClick OK to delete all instances.\nClick Cancel to delete only this specific date.`);
+            
+            if (deleteOptions) {
+                // Delete all instances of this recurring series
+                events = events.filter(event => {
+                    // Keep events that don't match this recurring series
+                    return event.title !== eventToDelete.title || 
+                           (event.recurring !== eventToDelete.recurring) ||
+                           (event.recurringEndDate !== eventToDelete.recurringEndDate);
+                });
+            } else {
+                // Delete only this specific instance
+                events = events.filter(event => event.id !== eventId);
+            }
         } else {
             // For non-recurring events, just delete the specific event
             events = events.filter(event => event.id !== eventId);
@@ -604,6 +786,28 @@ function generateRecurringEvents(baseEvent, startDate, endDate) {
     }
     
     return recurringEvents;
+}
+
+// Helper function to get week range text (e.g., "Nov 3-9, 2024")
+function getWeekRangeText(startOfWeek) {
+    const endOfWeek = new Date(startOfWeek);
+    endOfWeek.setDate(startOfWeek.getDate() + 6);
+    
+    const monthNameArr = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+    const monthNameShort = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    
+    // If week spans two months
+    if (startOfWeek.getMonth() !== endOfWeek.getMonth()) {
+        return `${monthNameShort[startOfWeek.getMonth()]} ${startOfWeek.getDate()} - ${monthNameShort[endOfWeek.getMonth()]} ${endOfWeek.getDate()}, ${endOfWeek.getFullYear()}`;
+    } 
+    // If week spans two years
+    else if (startOfWeek.getFullYear() !== endOfWeek.getFullYear()) {
+        return `${monthNameShort[startOfWeek.getMonth()]} ${startOfWeek.getDate()}, ${startOfWeek.getFullYear()} - ${monthNameShort[endOfWeek.getMonth()]} ${endOfWeek.getDate()}, ${endOfWeek.getFullYear()}`;
+    }
+    // Same month and year
+    else {
+        return `${monthNameArr[startOfWeek.getMonth()]} ${startOfWeek.getDate()}-${endOfWeek.getDate()}, ${startOfWeek.getFullYear()}`;
+    }
 }
 
 // Run initialization
