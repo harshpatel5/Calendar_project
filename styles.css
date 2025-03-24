@@ -137,7 +137,7 @@ button:hover {
 
 .event-item {
     padding: 12px;
-    background: #f8f9fa;
+    background: white;
     border-radius: 4px;
     border-left: 4px solid #007bff;
     cursor: pointer;
@@ -147,7 +147,7 @@ button:hover {
 }
 
 .event-item:hover {
-    background: #e9ecef;
+    background: #f8f9fa;
     transform: translateY(-2px);
     box-shadow: 0 3px 5px rgba(0,0,0,0.1);
 }
@@ -213,28 +213,50 @@ button:hover {
     height: 100%;
     background: rgba(0, 0, 0, 0.5);
     z-index: 1000;
+    overflow-y: auto;
 }
 
 .modal-content {
     position: relative;
     background: white;
-    margin: 50px auto;
+    margin: 20px auto;
     padding: 20px;
     width: 90%;
     max-width: 500px;
     border-radius: 8px;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
 }
 
-.close {
-    position: absolute;
-    right: 20px;
-    top: 10px;
-    font-size: 24px;
-    cursor: pointer;
+#event-form {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    overflow-y: auto;
+    padding-right: 10px;
+}
+
+#event-form::-webkit-scrollbar {
+    width: 6px;
+}
+
+#event-form::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+}
+
+#event-form::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 3px;
+}
+
+#event-form::-webkit-scrollbar-thumb:hover {
+    background: #555;
 }
 
 .form-group {
-    margin-bottom: 15px;
+    margin-bottom: 12px;
 }
 
 .form-group label {
@@ -255,6 +277,13 @@ button:hover {
     display: flex;
     gap: 10px;
     justify-content: flex-end;
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px solid #eee;
+    background: white;
+    position: sticky;
+    bottom: 0;
+    z-index: 1;
 }
 
 #delete-event {
@@ -314,6 +343,25 @@ button:hover {
         width: 100%;
         margin-top: 20px;
     }
+
+    .modal-content {
+        margin: 10px;
+        width: calc(100% - 20px);
+        padding: 15px;
+    }
+    
+    .form-buttons {
+        flex-direction: column;
+        padding: 10px;
+    }
+    
+    .form-buttons button {
+        width: 100%;
+    }
+    
+    .form-group {
+        margin-bottom: 10px;
+    }
 }
 
 .recurring-end-group {
@@ -329,4 +377,30 @@ button:hover {
     color: #495057;
     font-size: 0.9em;
     font-weight: bold;
+}
+
+.event-location {
+    font-size: 0.85em;
+    color: #495057;
+    margin: 4px 0;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.event-link {
+    margin: 4px 0;
+}
+
+.event-link a {
+    color: #007bff;
+    text-decoration: none;
+    font-size: 0.85em;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.event-link a:hover {
+    text-decoration: underline;
 }
